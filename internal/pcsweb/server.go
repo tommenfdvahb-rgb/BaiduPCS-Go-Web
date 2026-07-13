@@ -287,7 +287,7 @@ func (s *Server) handleUploadHistory(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, err)
 		return
 	}
-	history, err := listUploadHistory(ensureSession(w, r))
+	history, err := listUploadHistory()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -353,7 +353,7 @@ func (s *Server) handleDownloadHistory(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, err)
 		return
 	}
-	history, err := listDownloadHistory(ensureSession(w, r))
+	history, err := listDownloadHistory()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return

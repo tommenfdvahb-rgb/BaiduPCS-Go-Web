@@ -117,18 +117,8 @@ func finishUploadHistory(id, status, uploadErr string) {
 	_ = writeUploadHistory(history)
 }
 
-func listUploadHistory(sessionID string) ([]uploadHistoryEntry, error) {
+func listUploadHistory() ([]uploadHistoryEntry, error) {
 	uploadHistoryMu.Lock()
 	defer uploadHistoryMu.Unlock()
-	history, err := readUploadHistory()
-	if err != nil {
-		return nil, err
-	}
-	filtered := make([]uploadHistoryEntry, 0, len(history))
-	for _, entry := range history {
-		if entry.SessionID == sessionID {
-			filtered = append(filtered, entry)
-		}
-	}
-	return filtered, nil
+	return readUploadHistory()
 }

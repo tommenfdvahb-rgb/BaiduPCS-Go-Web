@@ -100,18 +100,8 @@ func finishDownloadHistory(id, status, downloadErr string) {
 	_ = writeDownloadHistory(history)
 }
 
-func listDownloadHistory(sessionID string) ([]downloadHistoryEntry, error) {
+func listDownloadHistory() ([]downloadHistoryEntry, error) {
 	downloadHistoryMu.Lock()
 	defer downloadHistoryMu.Unlock()
-	history, err := readDownloadHistory()
-	if err != nil {
-		return nil, err
-	}
-	filtered := make([]downloadHistoryEntry, 0, len(history))
-	for _, entry := range history {
-		if entry.SessionID == sessionID {
-			filtered = append(filtered, entry)
-		}
-	}
-	return filtered, nil
+	return readDownloadHistory()
 }
