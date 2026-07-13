@@ -21,6 +21,7 @@ import (
 	"github.com/qjfoidnh/BaiduPCS-Go/internal/pcsfunctions/pcsdownload"
 	_ "github.com/qjfoidnh/BaiduPCS-Go/internal/pcsinit"
 	"github.com/qjfoidnh/BaiduPCS-Go/internal/pcsupdate"
+	"github.com/qjfoidnh/BaiduPCS-Go/internal/pcsweb"
 	"github.com/qjfoidnh/BaiduPCS-Go/pcsliner"
 	"github.com/qjfoidnh/BaiduPCS-Go/pcsliner/args"
 	"github.com/qjfoidnh/BaiduPCS-Go/pcstable"
@@ -326,6 +327,24 @@ func main() {
 	}
 
 	app.Commands = []cli.Command{
+		{
+			Name:        "web",
+			Usage:       "启动 Web 文件管理页面",
+			UsageText:   app.Name + " web [options]",
+			Description: "启动本地 Web 控制台，浏览器访问显示的地址即可使用。",
+			Category:    "其他",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "addr",
+					Value: "127.0.0.1:8080",
+					Usage: "Web 服务监听地址",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				fmt.Printf("Web 控制台已启动: http://%s\n", c.String("addr"))
+				return pcsweb.NewServer(c.String("addr")).Run()
+			},
+		},
 		{
 			Name:     "run",
 			Usage:    "执行系统命令",

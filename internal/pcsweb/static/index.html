@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BaiduPCS // Web Console</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/">
+        <span class="brand-mark">B</span>
+        <span><b>BaiduPCS</b><small>WEB CONSOLE</small></span>
+      </a>
+      <div class="connection"><span class="pulse"></span><span id="account-state">连接中</span></div>
+    </header>
+
+    <section class="intro">
+      <div>
+        <p class="eyebrow">PERSONAL CLOUD / LOCAL GATEWAY</p>
+        <h1>你的网盘，<em>换一种视角。</em></h1>
+        <p class="lede">从命令行到浏览器，文件管理依然保持轻盈、直接。</p>
+      </div>
+      <div class="shortcut-card">
+        <span class="shortcut-label">启动地址</span>
+        <code id="origin">http://127.0.0.1:8080</code>
+        <span class="shortcut-hint">由 BaiduPCS-Go web 提供</span>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <div class="toolbar">
+        <div class="crumbs" id="breadcrumbs"></div>
+        <div class="toolbar-actions">
+          <button class="quiet-button" id="refresh-button">刷新</button>
+          <button class="primary-button" id="mkdir-button"><span>＋</span>新建文件夹</button>
+        </div>
+      </div>
+      <div class="upload-panel">
+        <div class="upload-copy">
+          <span class="upload-kicker">DROP ZONE / UPLOAD</span>
+          <strong>把文件放进网盘</strong>
+          <span id="upload-status">选择文件后上传至指定目录</span>
+        </div>
+        <div class="upload-controls">
+          <label class="select-wrap">
+            <span>上传到</span>
+            <select id="upload-directory" aria-label="上传目录"></select>
+          </label>
+          <label class="file-picker">
+            <input id="upload-files" type="file" multiple>
+            <span>选择文件</span>
+          </label>
+          <button class="upload-button" id="upload-button" disabled>开始上传</button>
+        </div>
+      </div>
+      <div class="table-head"><span>文件名</span><span>修改时间</span><span>大小</span><span></span></div>
+      <div id="file-list" class="file-list"></div>
+      <div id="notice" class="notice" hidden></div>
+    </section>
+
+    <footer><span>BAIDUPCS-GO</span><span>LOCAL ONLY · YOUR SESSION STAYS HERE</span></footer>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
