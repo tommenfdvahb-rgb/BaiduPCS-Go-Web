@@ -94,6 +94,7 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("/api/upload/tasks", s.handleUploadTasks)
 	mux.HandleFunc("/api/download/start", s.handleDownloadStart)
 	mux.HandleFunc("/api/download/tasks", s.handleDownloadTasks)
+	mux.HandleFunc("/api/download/history", s.handleDownloadHistory)
 	mux.HandleFunc("/api/mkdir", s.handleMkdir)
 	mux.HandleFunc("/api/rename", s.handleRename)
 	mux.HandleFunc("/api/upload", s.handleUpload)
@@ -289,8 +290,42 @@ func (s *Server) handleDownloadStart(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, errors.New("a file or directory path is required"))
 		return
 	}
-	go pcscommand.RunDownload([]string{request.Path}, nil)
+	savePath := pcsconfig.Config.ActiveUser().GetSavePath(request.Path)
+	historyID, err := beginDownloadHistory(request.Path, savePath)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	go func() {
+		status := "已完成"
+		downloadErr := ""
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				status = "失败"
+				downloadErr = fmt.Sprint(recovered)
+			}
+			finishDownloadHistory(historyID, status, downloadErr)
+		}()
+		pcscommand.RunDownload([]string{request.Path}, nil)
+	}()
 	writeJSON(w, http.StatusAccepted, map[string]string{"message": "download queued", "path": request.Path})
+}
+
+func (s *Server) handleDownloadHistory(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		methodNotAllowed(w)
+		return
+	}
+	if _, err := activePCS(); err != nil {
+		writeError(w, http.StatusUnauthorized, err)
+		return
+	}
+	history, err := listDownloadHistory()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]interface{}{"history": history})
 }
 
 func (s *Server) handleDownloadTasks(w http.ResponseWriter, r *http.Request) {

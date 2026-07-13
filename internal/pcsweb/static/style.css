@@ -122,6 +122,17 @@ button { font-family: var(--sans); cursor: pointer; }
 .task-meta strong { color: var(--green); font: 15px var(--mono); }
 .task-meta small { color: var(--muted); font: 10px var(--mono); margin-top: 4px; }
 .task-empty { padding: 25px 0 12px; color: var(--muted); font: 11px var(--mono); }
+.history-heading { margin-top: 8px; border-top: 1px solid var(--line); }
+.download-history-list { padding: 0 25px 23px; }
+.history-row { display: grid; grid-template-columns: minmax(0, 1fr) 70px 100px; gap: 14px; align-items: center; border-top: 1px solid #edf1eb; padding: 13px 0; }
+.history-main { min-width: 0; }
+.history-main strong, .history-main small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-main strong { color: var(--ink); font-size: 12px; }
+.history-main small, .history-time { color: var(--muted); font: 10px var(--mono); margin-top: 4px; }
+.history-status { color: var(--muted); font: 10px var(--mono); text-align: center; }
+.history-success { color: var(--green); }
+.history-failed { color: #b34f3b; }
+.history-time { text-align: right; }
 .table-head { grid-template-columns: minmax(220px, 1fr) 160px 110px 42px; gap: 18px; padding: 15px 25px 11px; color: #9aa59e; font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .file-row { grid-template-columns: minmax(220px, 1fr) 160px 110px 42px; gap: 18px; min-height: 67px; padding: 0 25px; border-top: 1px solid #edf1eb; animation: rise .35s both; }
 .file-row:hover { background: #fbfcf8; }
@@ -148,9 +159,12 @@ footer span:last-child { text-align: right; }
   .upload-heading { align-items: stretch; flex-direction: column; padding: 22px 18px; }
   .download-launcher { align-items: stretch; flex-direction: column; padding: 0 18px 18px; }
   .upload-task-list { padding: 0 18px 18px; }
+  .download-history-list { padding: 0 18px 18px; }
   .task-heading { padding: 18px 18px 10px; }
   .upload-task { grid-template-columns: 34px minmax(0, 1fr) 62px; gap: 9px; }
   .task-meta small { line-height: 1.4; }
+  .history-row { grid-template-columns: minmax(0, 1fr) 60px; gap: 8px; }
+  .history-time { display: none; }
   .toolbar { grid-template-columns: 1fr; gap: 15px; padding: 18px; }
   .toolbar-actions { justify-content: space-between; }
   .upload-panel { align-items: stretch; flex-direction: column; padding: 18px; }
