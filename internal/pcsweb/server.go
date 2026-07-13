@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/qjfoidnh/BaiduPCS-Go/baidupcs"
@@ -63,6 +64,7 @@ func (s *Server) Run() error {
 func (s *Server) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/status", s.handleStatus)
+	mux.HandleFunc("/api/login", s.handleLogin)
 	mux.HandleFunc("/api/files", s.handleFiles)
 	mux.HandleFunc("/api/mkdir", s.handleMkdir)
 	mux.HandleFunc("/api/rename", s.handleRename)
@@ -90,6 +92,44 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	user := pcsconfig.Config.ActiveUser()
 	loggedIn := user.Name != "" && (user.BDUSS != "" || user.AccessToken != "" || user.COOKIES != "")
 	writeJSON(w, http.StatusOK, statusResponse{LoggedIn: loggedIn, UserName: user.Name})
+}
+
+func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		methodNotAllowed(w)
+		return
+	}
+	var request struct {
+		Cookies string `json:"cookies"`
+	}
+	if !decodeJSON(w, r, &request) {
+		return
+	}
+	request.Cookies = strings.TrimSpace(request.Cookies)
+	if request.Cookies == "" {
+		writeError(w, http.StatusBadRequest, errors.New("cookies are required"))
+		return
+	}
+	if !hasCookie(request.Cookies, "BDUSS") {
+		writeError(w, http.StatusBadRequest, errors.New("cookies must contain BDUSS"))
+		return
+	}
+
+	user, err := pcsconfig.Config.SetupUserByBDUSS("", "", "", request.Cookies)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, err)
+		return
+	}
+	if err := pcsconfig.Config.Save(); err != nil {
+		writeError(w, http.StatusInternalServerError, fmt.Errorf("login succeeded but saving config failed: %w", err))
+		return
+	}
+	writeJSON(w, http.StatusOK, statusResponse{LoggedIn: true, UserName: user.Name})
+}
+
+func hasCookie(cookieHeader, name string) bool {
+	pattern := regexp.MustCompile(`(?:^|;\s*)` + regexp.QuoteMeta(name) + `=[^;]+`)
+	return pattern.MatchString(cookieHeader)
 }
 
 func (s *Server) handleFiles(w http.ResponseWriter, r *http.Request) {

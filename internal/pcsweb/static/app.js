@@ -6,6 +6,11 @@ const uploadInput = document.querySelector("#upload-files");
 const uploadButton = document.querySelector("#upload-button");
 const uploadDirectory = document.querySelector("#upload-directory");
 const uploadStatus = document.querySelector("#upload-status");
+const loginScreen = document.querySelector("#login-screen");
+const appScreen = document.querySelector("#app-screen");
+const loginForm = document.querySelector("#login-form");
+const cookieInput = document.querySelector("#cookie-input");
+const loginNotice = document.querySelector("#login-notice");
 
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
@@ -81,9 +86,20 @@ async function loadStatus() {
     const pulse = document.querySelector(".pulse");
     stateLabel.textContent = data.logged_in ? `已连接 · ${data.user_name}` : "未登录";
     pulse.classList.toggle("online", data.logged_in);
+    loginScreen.hidden = data.logged_in;
+    appScreen.hidden = !data.logged_in;
+    return data.logged_in;
   } catch (_) {
     document.querySelector("#account-state").textContent = "服务不可用";
+    loginScreen.hidden = false;
+    appScreen.hidden = true;
+    return false;
   }
+}
+
+function showLoginNotice(message) {
+  loginNotice.textContent = message;
+  loginNotice.hidden = !message;
 }
 
 async function loadFiles(path) {
@@ -129,6 +145,35 @@ async function renameItem(oldPath, oldName) {
 
 document.querySelector("#refresh-button").addEventListener("click", () => loadFiles(state.path));
 document.querySelector("#mkdir-button").addEventListener("click", createFolder);
+loginForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  const cookies = cookieInput.value.trim();
+  if (!cookies) {
+    showLoginNotice("请粘贴百度网盘 Cookie");
+    return;
+  }
+  const button = loginForm.querySelector("button[type=submit]");
+  button.disabled = true;
+  button.textContent = "正在验证……";
+  showLoginNotice("");
+  try {
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cookies })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "登录失败");
+    cookieInput.value = "";
+    await loadStatus();
+    await loadFiles("/");
+  } catch (error) {
+    showLoginNotice(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "使用 Cookie 登录";
+  }
+});
 uploadInput.addEventListener("change", () => {
   const count = uploadInput.files.length;
   uploadButton.disabled = count === 0;
@@ -171,5 +216,4 @@ uploadButton.addEventListener("click", () => {
   request.send(formData);
 });
 document.querySelector("#origin").textContent = window.location.origin;
-loadStatus();
-loadFiles("/");
+loadStatus().then(loggedIn => { if (loggedIn) loadFiles("/"); });

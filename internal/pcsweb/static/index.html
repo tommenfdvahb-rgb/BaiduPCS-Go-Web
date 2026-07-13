@@ -18,6 +18,27 @@
       <div class="connection"><span class="pulse"></span><span id="account-state">连接中</span></div>
     </header>
 
+    <section id="login-screen" class="login-screen" hidden>
+      <div class="login-card">
+        <p class="eyebrow">PRIVATE ACCESS / BAIDU NETDISK</p>
+        <h1>先登录，<em>再出发。</em></h1>
+        <p class="lede">粘贴浏览器中百度网盘的 Cookie，凭借现有 CLI 登录配置访问你的文件。</p>
+        <form id="login-form">
+          <label class="cookie-label" for="cookie-input">百度网盘 Cookie</label>
+          <textarea id="cookie-input" rows="5" autocomplete="off" spellcheck="false" placeholder="BDUSS=...; STOKEN=...; BAIDUID=...;"></textarea>
+          <div class="login-hint">Cookie 只提交给当前运行的 BaiduPCS-Go，不会写入网页缓存。</div>
+          <button class="primary-button login-button" type="submit">使用 Cookie 登录</button>
+          <div id="login-notice" class="login-notice" hidden></div>
+        </form>
+      </div>
+      <div class="login-aside">
+        <span class="aside-number">01</span>
+        <strong>保持本地</strong>
+        <p>服务默认只监听 127.0.0.1。你的 Cookie 不会经过第三方页面。</p>
+      </div>
+    </section>
+
+    <div id="app-screen" hidden>
     <section class="intro">
       <div>
         <p class="eyebrow">PERSONAL CLOUD / LOCAL GATEWAY</p>
@@ -63,6 +84,7 @@
     </section>
 
     <footer><span>BAIDUPCS-GO</span><span>LOCAL ONLY · YOUR SESSION STAYS HERE</span></footer>
+    </div>
   </main>
   <script src="/app.js"></script>
 </body>
