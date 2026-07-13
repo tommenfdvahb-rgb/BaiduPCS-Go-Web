@@ -343,6 +343,7 @@ function startBrowserDownload(remotePath) {
 
 function switchTab(tab) {
   state.activeTab = tab;
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   const overview = tab === "overview";
   overviewTab.classList.toggle("active", overview);
   uploadTab.classList.toggle("active", tab === "upload");

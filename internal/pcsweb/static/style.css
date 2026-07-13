@@ -43,6 +43,7 @@ body {
 .topbar .tab { padding-bottom: 7px; }
 .connection { justify-self: end; }
 #app-screen { margin-top: 32px; }
+.tab-pane { width: 100%; margin: 0; }
 .tab { position: relative; border: 0; background: transparent; color: var(--muted); padding: 0 2px 12px; font-size: 13px; font-weight: 700; }
 .tab.active { color: var(--green); }
 .tab.active::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; background: var(--green); content: ""; }
@@ -72,7 +73,7 @@ body {
 h1 { font-size: clamp(38px, 6vw, 70px); letter-spacing: -.075em; line-height: .98; margin: 0; max-width: 720px; }
 h1 em { color: var(--green); font-style: normal; }
 .lede { color: var(--muted); font-size: 15px; margin: 22px 0 0; }
-.workspace { background: var(--card); border: 1px solid rgba(255, 255, 255, .78); border-radius: 22px; box-shadow: 0 22px 60px rgba(49, 75, 59, .1); overflow: hidden; backdrop-filter: blur(14px); }
+.workspace, .upload-workspace { background: var(--card); border: 1px solid rgba(255, 255, 255, .78); border-radius: 22px; box-shadow: 0 22px 60px rgba(49, 75, 59, .1); overflow: hidden; backdrop-filter: blur(14px); }
 .toolbar { grid-template-columns: 1fr auto; min-height: 82px; padding: 0 25px; border-bottom: 1px solid var(--line); }
 .crumbs { display: flex; flex-wrap: wrap; gap: 4px; font: 13px var(--mono); }
 .crumb { border: 0; background: transparent; color: var(--muted); padding: 7px 5px; cursor: pointer; }
@@ -123,7 +124,6 @@ button { font-family: var(--sans); cursor: pointer; }
 .download-path-wrap input:focus { border-color: var(--green); box-shadow: 0 0 0 4px rgba(13, 116, 99, .1); }
 .download-actions { display: flex; gap: 8px; }
 .download-icon { background: #e5edf7; color: #3c6b9f; }
-.upload-workspace { background: var(--card); border: 1px solid rgba(255, 255, 255, .78); border-radius: 22px; box-shadow: 0 22px 60px rgba(49, 75, 59, .1); overflow: hidden; backdrop-filter: blur(14px); }
 .upload-heading { display: flex; justify-content: space-between; align-items: end; gap: 22px; padding: 27px 25px 24px; }
 .upload-heading h2 { margin: 0; font-size: 28px; letter-spacing: -.06em; }
 .upload-heading p:not(.eyebrow) { color: var(--muted); font-size: 12px; margin: 9px 0 0; }
