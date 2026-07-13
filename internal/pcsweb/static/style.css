@@ -28,7 +28,7 @@ body {
 .ambient-two { width: 280px; height: 280px; background: #f7d8b3; bottom: -120px; left: -80px; opacity: .62; }
 .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 28px 0 34px; }
 .topbar, .toolbar, footer, .table-head, .file-row { display: grid; align-items: center; }
-.topbar { grid-template-columns: 1fr auto; }
+.topbar { grid-template-columns: 1fr auto 1fr; gap: 22px; }
 .brand { display: inline-flex; align-items: center; gap: 11px; color: var(--ink); text-decoration: none; width: max-content; }
 .brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px 11px 11px 3px; background: var(--green); color: white; font-weight: 800; font-size: 20px; }
 .brand b, .brand small { display: block; }
@@ -39,6 +39,9 @@ body {
 .pulse.online { background: var(--green); box-shadow: 0 0 0 5px rgba(13, 116, 99, .12); }
 .login-open { border: 0; border-bottom: 1px solid currentColor; background: transparent; color: var(--green); padding: 2px 0; font: 11px var(--mono); }
 .tabbar { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+.topbar .tabbar { justify-self: center; gap: 22px; border-bottom: 0; margin-bottom: 0; }
+.topbar .tab { padding-bottom: 7px; }
+.connection { justify-self: end; }
 .tab { position: relative; border: 0; background: transparent; color: var(--muted); padding: 0 2px 12px; font-size: 13px; font-weight: 700; }
 .tab.active { color: var(--green); }
 .tab.active::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; background: var(--green); content: ""; }
@@ -154,6 +157,9 @@ footer span:last-child { text-align: right; }
 @keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (max-width: 720px) {
   .shell { width: min(100% - 24px, 560px); padding-top: 18px; }
+  .topbar { grid-template-columns: 1fr; gap: 15px; }
+  .topbar .tabbar { justify-self: start; max-width: 100%; overflow-x: auto; }
+  .connection { justify-self: start; }
   .login-modal-card { padding: 25px 20px; }
   .upload-heading { align-items: stretch; flex-direction: column; padding: 22px 18px; }
   .download-launcher { align-items: stretch; flex-direction: column; padding: 0 18px 18px; }

@@ -15,6 +15,11 @@
         <span class="brand-mark">B</span>
         <span><b>BaiduPCS</b><small>WEB CONSOLE</small></span>
       </a>
+      <nav class="tabbar" aria-label="主导航">
+        <button class="tab active" id="overview-tab" data-tab="overview">文件概览</button>
+        <button class="tab" id="upload-tab" data-tab="upload">文件上传 <span class="task-badge" id="task-count" hidden>0</span></button>
+        <button class="tab" id="download-tab" data-tab="download">文件下载 <span class="task-badge" id="download-task-count" hidden>0</span></button>
+      </nav>
       <div class="connection">
         <span class="pulse"></span>
         <span id="account-state">连接中</span>
@@ -38,12 +43,6 @@
         </form>
       </div>
     </div>
-
-    <nav class="tabbar" aria-label="主导航">
-      <button class="tab active" id="overview-tab" data-tab="overview">文件概览</button>
-      <button class="tab" id="upload-tab" data-tab="upload">文件上传 <span class="task-badge" id="task-count" hidden>0</span></button>
-      <button class="tab" id="download-tab" data-tab="download">文件下载 <span class="task-badge" id="download-task-count" hidden>0</span></button>
-    </nav>
 
     <div id="app-screen" hidden>
       <section id="overview-pane" class="tab-pane">
