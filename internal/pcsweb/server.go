@@ -55,6 +55,7 @@ type statusResponse struct {
 }
 
 type uploadTaskResponse struct {
+	ID       string `json:"id"`
 	Path     string `json:"path"`
 	Length   int64  `json:"length"`
 	Uploaded int64  `json:"uploaded"`
@@ -118,6 +119,7 @@ func fsSub(files embed.FS, dir string) (fs.FS, error) {
 }
 
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
+	ensureSession(w, r)
 	user := pcsconfig.Config.ActiveUser()
 	loggedIn := user.Name != "" && (user.BDUSS != "" || user.AccessToken != "" || user.COOKIES != "")
 	writeJSON(w, http.StatusOK, statusResponse{LoggedIn: loggedIn, UserName: user.Name})
@@ -128,6 +130,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		methodNotAllowed(w)
 		return
 	}
+	ensureSession(w, r)
 	var request struct {
 		Cookies string `json:"cookies"`
 	}
@@ -234,38 +237,42 @@ func (s *Server) handleUploadTasks(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, err)
 		return
 	}
-	database, err := pcsupload.NewUploadingDatabase()
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err)
-		return
+	sessionID := ensureSession(w, r)
+	webTasks := listUploadTasks(sessionID)
+	tasks := make([]uploadTaskResponse, 0, len(webTasks))
+	database, databaseErr := pcsupload.NewUploadingDatabase()
+	if databaseErr == nil {
+		defer database.Close()
 	}
-	defer database.Close()
-
-	tasks := make([]uploadTaskResponse, 0, len(database.UploadingList))
-	for _, task := range database.UploadingList {
-		if task == nil || task.LocalFileMeta == nil {
-			continue
-		}
+	for _, webTask := range webTasks {
 		var uploaded int64
-		if task.State != nil {
-			for _, block := range task.State.BlockList {
-				if block != nil && block.CheckSum != "" {
-					uploaded += block.Range.End - block.Range.Begin
+		if databaseErr == nil {
+			for _, task := range database.UploadingList {
+				if task == nil || task.LocalFileMeta == nil || task.Path != webTask.Path {
+					continue
 				}
+				if task.State != nil {
+					for _, block := range task.State.BlockList {
+						if block != nil && block.CheckSum != "" {
+							uploaded += block.Range.End - block.Range.Begin
+						}
+					}
+				}
+				break
 			}
 		}
 		progress := 0
-		if task.Length > 0 {
-			progress = int(uploaded * 100 / task.Length)
+		if webTask.Length > 0 {
+			progress = int(uploaded * 100 / webTask.Length)
 			if progress > 100 {
 				progress = 100
 			}
 		}
-		status := "等待上传"
+		status := webTask.Status
 		if uploaded > 0 {
 			status = "正在上传"
 		}
-		tasks = append(tasks, uploadTaskResponse{Path: task.Path, Length: task.Length, Uploaded: uploaded, Progress: progress, Status: status})
+		tasks = append(tasks, uploadTaskResponse{ID: webTask.ID, Path: webTask.Path, Length: webTask.Length, Uploaded: uploaded, Progress: progress, Status: status})
 	}
 	writeJSON(w, http.StatusOK, map[string]interface{}{"tasks": tasks})
 }
@@ -290,12 +297,19 @@ func (s *Server) handleDownloadStart(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, errors.New("a file or directory path is required"))
 		return
 	}
-	savePath := pcsconfig.Config.ActiveUser().GetSavePath(request.Path)
-	historyID, err := beginDownloadHistory(request.Path, savePath)
+	sessionID := ensureSession(w, r)
+	downloadRoot := filepath.Join(pcsconfig.Config.SaveDir, "WebDownloads", sessionID)
+	savePath := filepath.Join(downloadRoot, filepath.FromSlash(strings.TrimPrefix(request.Path, "/")))
+	if downloadPathActive(savePath) {
+		writeError(w, http.StatusConflict, errors.New("this download is already running"))
+		return
+	}
+	historyID, err := beginDownloadHistory(sessionID, request.Path, savePath)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
+	taskID := addDownloadTask(sessionID, request.Path, savePath)
 	go func() {
 		status := "已完成"
 		downloadErr := ""
@@ -305,8 +319,9 @@ func (s *Server) handleDownloadStart(w http.ResponseWriter, r *http.Request) {
 				downloadErr = fmt.Sprint(recovered)
 			}
 			finishDownloadHistory(historyID, status, downloadErr)
+			removeDownloadTask(taskID)
 		}()
-		pcscommand.RunDownload([]string{request.Path}, nil)
+		pcscommand.RunDownload([]string{request.Path}, &pcscommand.DownloadOptions{SaveTo: downloadRoot})
 	}()
 	writeJSON(w, http.StatusAccepted, map[string]string{"message": "download queued", "path": request.Path})
 }
@@ -320,7 +335,7 @@ func (s *Server) handleDownloadHistory(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, err)
 		return
 	}
-	history, err := listDownloadHistory()
+	history, err := listDownloadHistory(ensureSession(w, r))
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -337,27 +352,11 @@ func (s *Server) handleDownloadTasks(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, err)
 		return
 	}
-	tasks := make([]downloadTaskResponse, 0)
-	root := pcsconfig.Config.SaveDir
-	_ = filepath.WalkDir(root, func(filePath string, entry fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return nil
-		}
-		if entry.IsDir() || !strings.HasSuffix(filePath, pcsdownload.DownloadSuffix) {
-			return nil
-		}
-		stateFile, openErr := os.Open(filePath)
-		if openErr != nil {
-			return nil
-		}
-		state := downloader.NewInstanceState(stateFile, downloader.InstanceStateStorageFormatProto3)
-		info := state.Get()
-		_ = state.Close()
-		if info == nil || info.DownloadStatus == nil {
-			return nil
-		}
-		total := info.DownloadStatus.TotalSize()
-		downloaded := info.DownloadStatus.Downloaded()
+	sessionID := ensureSession(w, r)
+	webTasks := listDownloadTasks(sessionID)
+	tasks := make([]downloadTaskResponse, 0, len(webTasks))
+	for _, webTask := range webTasks {
+		total, downloaded := downloadProgress(webTask.SavePath)
 		progress := 0
 		if total > 0 {
 			progress = int(downloaded * 100 / total)
@@ -365,11 +364,24 @@ func (s *Server) handleDownloadTasks(w http.ResponseWriter, r *http.Request) {
 				progress = 100
 			}
 		}
-		savePath := strings.TrimSuffix(filePath, pcsdownload.DownloadSuffix)
-		tasks = append(tasks, downloadTaskResponse{Path: "", SavePath: savePath, Total: total, Downloaded: downloaded, Progress: progress, Status: "正在下载"})
-		return nil
-	})
+		tasks = append(tasks, downloadTaskResponse{Path: webTask.Path, SavePath: webTask.SavePath, Total: total, Downloaded: downloaded, Progress: progress, Status: webTask.Status})
+	}
 	writeJSON(w, http.StatusOK, map[string]interface{}{"tasks": tasks})
+}
+
+func downloadProgress(savePath string) (total, downloaded int64) {
+	stateFile, err := os.Open(savePath + pcsdownload.DownloadSuffix)
+	if err != nil {
+		return
+	}
+	defer stateFile.Close()
+	state := downloader.NewInstanceState(stateFile, downloader.InstanceStateStorageFormatProto3)
+	info := state.Get()
+	_ = state.Close()
+	if info == nil || info.DownloadStatus == nil {
+		return
+	}
+	return info.DownloadStatus.TotalSize(), info.DownloadStatus.Downloaded()
 }
 
 func queryInt(r *http.Request, key string, fallback int) int {
@@ -443,6 +455,7 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, err)
 		return
 	}
+	sessionID := ensureSession(w, r)
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid upload form: %w", err))
 		return
@@ -491,7 +504,22 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		localPaths = append(localPaths, localPath)
 	}
 
-	// Reuse the existing upload pipeline so Web and CLI share upload behavior.
+	taskIDs := make([]string, 0, len(localPaths))
+	for _, localPath := range localPaths {
+		var length int64
+		if info, statErr := os.Stat(localPath); statErr == nil {
+			length = info.Size()
+		}
+		taskIDs = append(taskIDs, addUploadTask(sessionID, localPath, length))
+	}
+	uploadExecutionMu.Lock()
+	defer uploadExecutionMu.Unlock()
+	defer removeUploadTasks(taskIDs)
+	for _, taskID := range taskIDs {
+		updateUploadTask(taskID, "上传中")
+	}
+
+	// Reuse the existing upload pipeline and serialize it because its checkpoint file is shared.
 	pcscommand.RunUpload(localPaths, targetPath, nil)
 	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"message":     "upload finished",

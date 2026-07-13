@@ -15,6 +15,7 @@ const downloadHistoryFileName = "pcsweb_download_history.json"
 
 type downloadHistoryEntry struct {
 	ID         string `json:"id"`
+	SessionID  string `json:"-"`
 	Path       string `json:"path"`
 	SavePath   string `json:"save_path"`
 	Status     string `json:"status"`
@@ -58,7 +59,7 @@ func writeDownloadHistory(history []downloadHistoryEntry) error {
 	return os.WriteFile(downloadHistoryPath(), data, 0600)
 }
 
-func beginDownloadHistory(remotePath, savePath string) (string, error) {
+func beginDownloadHistory(sessionID, remotePath, savePath string) (string, error) {
 	downloadHistoryMu.Lock()
 	defer downloadHistoryMu.Unlock()
 	history, err := readDownloadHistory()
@@ -68,6 +69,7 @@ func beginDownloadHistory(remotePath, savePath string) (string, error) {
 	id := fmt.Sprintf("%d", time.Now().UnixNano())
 	history = append([]downloadHistoryEntry{{
 		ID:        id,
+		SessionID: sessionID,
 		Path:      remotePath,
 		SavePath:  savePath,
 		Status:    "下载中",
@@ -98,8 +100,18 @@ func finishDownloadHistory(id, status, downloadErr string) {
 	_ = writeDownloadHistory(history)
 }
 
-func listDownloadHistory() ([]downloadHistoryEntry, error) {
+func listDownloadHistory(sessionID string) ([]downloadHistoryEntry, error) {
 	downloadHistoryMu.Lock()
 	defer downloadHistoryMu.Unlock()
-	return readDownloadHistory()
+	history, err := readDownloadHistory()
+	if err != nil {
+		return nil, err
+	}
+	filtered := make([]downloadHistoryEntry, 0, len(history))
+	for _, entry := range history {
+		if entry.SessionID == sessionID {
+			filtered = append(filtered, entry)
+		}
+	}
+	return filtered, nil
 }
