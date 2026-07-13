@@ -44,6 +44,7 @@ body {
 .account-login-button { border: 1px solid var(--line); border-radius: 9px; background: rgba(255, 255, 251, .75); color: var(--green); padding: 11px 15px; font-size: 12px; font-weight: 700; }
 .account-login-button:hover { border-color: var(--green); }
 .modal { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 20px; }
+.modal[hidden] { display: none !important; }
 .modal-backdrop { position: absolute; inset: 0; background: rgba(27, 41, 40, .28); backdrop-filter: blur(4px); }
 .login-modal-card { position: relative; width: min(100%, 540px); border: 1px solid rgba(255, 255, 255, .8); border-radius: 18px; padding: 30px; background: var(--paper); box-shadow: 0 24px 80px rgba(27, 41, 40, .22); animation: modal-in .2s ease-out; }
 .login-modal-card h2 { margin: 0; font-size: 30px; letter-spacing: -.06em; }

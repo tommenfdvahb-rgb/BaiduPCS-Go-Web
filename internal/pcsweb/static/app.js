@@ -107,6 +107,7 @@ async function loadStatus() {
     accountLogin.textContent = data.logged_in ? "切换账号" : "登录账号";
     accountName.textContent = data.logged_in ? `已连接 · ${data.user_name}` : "未登录";
     sessionCopy.textContent = data.logged_in ? "当前账号已连接，可以浏览、上传和管理网盘文件。" : "点击登录按钮，输入 Cookie 后开始管理文件。";
+    if (data.logged_in) closeLoginModal();
     appScreen.hidden = !data.logged_in;
     return data.logged_in;
   } catch (_) {
@@ -173,11 +174,13 @@ document.querySelector("#refresh-button").addEventListener("click", () => loadFi
 document.querySelector("#mkdir-button").addEventListener("click", createFolder);
 function openLoginModal() {
   loginModal.hidden = false;
+  loginModal.removeAttribute("hidden");
   cookieInput.focus();
 }
 
 function closeLoginModal() {
   loginModal.hidden = true;
+  loginModal.setAttribute("hidden", "");
   showLoginNotice("");
 }
 
