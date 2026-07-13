@@ -42,6 +42,7 @@ body {
 .topbar .tabbar { justify-self: center; gap: 22px; border-bottom: 0; margin-bottom: 0; }
 .topbar .tab { padding-bottom: 7px; }
 .connection { justify-self: end; }
+#app-screen { margin-top: 32px; }
 .tab { position: relative; border: 0; background: transparent; color: var(--muted); padding: 0 2px 12px; font-size: 13px; font-weight: 700; }
 .tab.active { color: var(--green); }
 .tab.active::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; background: var(--green); content: ""; }
@@ -161,6 +162,7 @@ footer span:last-child { text-align: right; }
   .topbar { grid-template-columns: 1fr; gap: 15px; }
   .topbar .tabbar { justify-self: start; max-width: 100%; overflow-x: auto; }
   .connection { justify-self: start; }
+  #app-screen { margin-top: 24px; }
   .login-modal-card { padding: 25px 20px; }
   .upload-heading { align-items: stretch; flex-direction: column; padding: 22px 18px; }
   .download-launcher { align-items: stretch; flex-direction: column; padding: 0 18px 18px; }
