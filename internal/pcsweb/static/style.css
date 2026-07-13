@@ -83,7 +83,7 @@ button { font-family: var(--sans); cursor: pointer; }
 .quiet-button { border: 1px solid var(--line); color: var(--muted); background: transparent; }
 .primary-button { border: 1px solid var(--green); background: var(--green); color: white; }
 .primary-button span { color: var(--lime); font-size: 17px; vertical-align: -1px; margin-right: 5px; }
-.upload-panel { display: grid; grid-template-columns: minmax(160px, 1.1fr) minmax(150px, .8fr) auto auto minmax(230px, 1.1fr) auto minmax(180px, .8fr); gap: 12px; align-items: end; padding: 17px 25px; background: #f8faf2; border-bottom: 1px solid var(--line); }
+.upload-panel { display: grid; grid-template-columns: minmax(160px, 1.1fr) minmax(150px, .8fr) auto auto minmax(230px, 1.1fr) auto; gap: 12px; align-items: end; padding: 17px 25px; background: #f8faf2; border-bottom: 1px solid var(--line); }
 .upload-copy strong, .upload-copy span { display: block; }
 .upload-copy strong { font-size: 13px; margin: 4px 0 3px; }
 .upload-copy span:last-child { color: var(--muted); font: 10px var(--mono); }
