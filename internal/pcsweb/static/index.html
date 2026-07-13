@@ -125,7 +125,10 @@
               <span>网盘路径</span>
               <input id="download-path" type="text" placeholder="例如：/文档/资料.zip">
             </label>
-            <button class="primary-button" id="download-start">加入下载</button>
+            <div class="download-actions">
+              <button class="quiet-button" id="browser-download">浏览器接收</button>
+              <button class="primary-button" id="download-start">加入服务器队列</button>
+            </div>
           </div>
           <div class="task-heading"><span>正在下载</span><small id="download-task-summary">暂无任务</small></div>
           <div id="download-task-list" class="upload-task-list"></div>

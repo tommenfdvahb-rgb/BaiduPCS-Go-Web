@@ -98,7 +98,7 @@ function renderFiles(items) {
     if (button.dataset.dir === "true") loadFiles(button.dataset.open);
   }));
   list.querySelectorAll("[data-download]").forEach(button => button.addEventListener("click", () => {
-    startDownload(button.dataset.download);
+    startBrowserDownload(button.dataset.download);
   }));
   list.querySelectorAll("[data-rename]").forEach(button => button.addEventListener("click", () => renameItem(button.dataset.rename, button.dataset.name)));
 }
@@ -261,6 +261,12 @@ async function startDownload(remotePath) {
   }
 }
 
+function startBrowserDownload(remotePath) {
+  remotePath = String(remotePath || "").trim();
+  if (!remotePath) return;
+  window.location.href = `/api/download?path=${encodeURIComponent(remotePath)}`;
+}
+
 function switchTab(tab) {
   state.activeTab = tab;
   const overview = tab === "overview";
@@ -359,6 +365,7 @@ downloadTab.addEventListener("click", () => switchTab("download"));
 document.querySelector("#upload-refresh").addEventListener("click", () => { loadUploadTasks(); loadUploadHistory(); });
 document.querySelector("#download-refresh").addEventListener("click", () => { loadDownloadTasks(); loadDownloadHistory(); });
 document.querySelector("#download-start").addEventListener("click", () => startDownload(downloadPath.value));
+document.querySelector("#browser-download").addEventListener("click", () => startBrowserDownload(downloadPath.value));
 function openLoginModal() {
   loginModal.hidden = false;
   loginModal.removeAttribute("hidden");
