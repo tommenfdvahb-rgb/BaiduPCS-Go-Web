@@ -6,6 +6,8 @@ const uploadInput = document.querySelector("#upload-files");
 const uploadButton = document.querySelector("#upload-button");
 const uploadDirectory = document.querySelector("#upload-directory");
 const uploadStatus = document.querySelector("#upload-status");
+const serverUploadPath = document.querySelector("#server-upload-path");
+const serverUploadButton = document.querySelector("#server-upload-button");
 const appScreen = document.querySelector("#app-screen");
 const loginModal = document.querySelector("#login-modal");
 const loginOpen = document.querySelector("#login-open");
@@ -453,6 +455,30 @@ uploadButton.addEventListener("click", () => {
     uploadButton.disabled = false;
   });
   request.send(formData);
+});
+serverUploadButton.addEventListener("click", async () => {
+  const localPath = serverUploadPath.value.trim();
+  if (!localPath) {
+    showNotice("请输入服务器本地文件路径");
+    return;
+  }
+  serverUploadButton.disabled = true;
+  serverUploadButton.textContent = "已加入队列";
+  uploadStatus.textContent = `服务器文件排队中 · ${localPath}`;
+  try {
+    await requestJSON("/api/upload/local", "POST", { local_path: localPath, target_path: uploadDirectory.value });
+    showNotice("");
+    uploadStatus.textContent = "服务器文件已加入上传队列";
+    serverUploadPath.value = "";
+    await loadUploadTasks();
+    await loadUploadHistory();
+  } catch (error) {
+    showNotice(error.message);
+    uploadStatus.textContent = "服务器文件上传失败";
+  } finally {
+    serverUploadButton.disabled = false;
+    serverUploadButton.textContent = "上传服务器文件";
+  }
 });
 setInterval(() => {
   loadUploadTasks();

@@ -94,6 +94,7 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("/api/files", s.handleFiles)
 	mux.HandleFunc("/api/upload/tasks", s.handleUploadTasks)
 	mux.HandleFunc("/api/upload/history", s.handleUploadHistory)
+	mux.HandleFunc("/api/upload/local", s.handleLocalUpload)
 	mux.HandleFunc("/api/download/start", s.handleDownloadStart)
 	mux.HandleFunc("/api/download/tasks", s.handleDownloadTasks)
 	mux.HandleFunc("/api/download/history", s.handleDownloadHistory)
@@ -524,10 +525,59 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		fileNames = append(fileNames, name)
 	}
 
-	historyID, err := beginUploadHistory(sessionID, targetPath, fileNames)
-	if err != nil {
+	if err := runUploadJob(sessionID, targetPath, localPaths, fileNames); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
+	}
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"message":     "upload finished",
+		"target_path": targetPath,
+		"count":       len(localPaths),
+	})
+}
+
+func (s *Server) handleLocalUpload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		methodNotAllowed(w)
+		return
+	}
+	if _, err := activePCS(); err != nil {
+		writeError(w, http.StatusUnauthorized, err)
+		return
+	}
+	sessionID := ensureSession(w, r)
+	var request struct {
+		LocalPath  string `json:"local_path"`
+		TargetPath string `json:"target_path"`
+	}
+	if !decodeJSON(w, r, &request) {
+		return
+	}
+	localPath := filepath.Clean(strings.TrimSpace(request.LocalPath))
+	if localPath == "." || localPath == "" {
+		writeError(w, http.StatusBadRequest, errors.New("local_path is required"))
+		return
+	}
+	info, err := os.Stat(localPath)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Errorf("server path is not accessible: %w", err))
+		return
+	}
+	name := filepath.Base(localPath)
+	if info.IsDir() {
+		name += " (目录)"
+	}
+	targetPath := normalizePath(request.TargetPath)
+	go func() {
+		_ = runUploadJob(sessionID, targetPath, []string{localPath}, []string{name})
+	}()
+	writeJSON(w, http.StatusAccepted, map[string]string{"message": "upload queued", "path": localPath})
+}
+
+func runUploadJob(sessionID, targetPath string, localPaths, fileNames []string) (err error) {
+	historyID, err := beginUploadHistory(sessionID, targetPath, fileNames)
+	if err != nil {
+		return err
 	}
 	taskIDs := make([]string, 0, len(localPaths))
 	for _, localPath := range localPaths {
@@ -553,14 +603,8 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	for _, taskID := range taskIDs {
 		updateUploadTask(taskID, "上传中")
 	}
-
-	// Reuse the existing upload pipeline and serialize it because its checkpoint file is shared.
 	pcscommand.RunUpload(localPaths, targetPath, nil)
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"message":     "upload finished",
-		"target_path": targetPath,
-		"count":       len(localPaths),
-	})
+	return nil
 }
 
 func (s *Server) handleFile(w http.ResponseWriter, r *http.Request) {
