@@ -733,20 +733,33 @@ func (s *Server) handleDownload(w http.ResponseWriter, r *http.Request) {
 		request.Header.Set("User-Agent", pcsconfig.Config.PanUA)
 		request.Header.Set("Referer", "https://pan.baidu.com/")
 		request.Header.Set("Cookie", cookieHeader(jar, request.URL))
+		if rangeHeader := r.Header.Get("Range"); rangeHeader != "" {
+			request.Header.Set("Range", rangeHeader)
+		}
+		if ifRange := r.Header.Get("If-Range"); ifRange != "" {
+			request.Header.Set("If-Range", ifRange)
+		}
 		response, responseErr := pcs.GetClient().Do(request)
 		if responseErr != nil {
 			return responseErr
 		}
 		defer response.Body.Close()
+		if response.StatusCode == http.StatusRequestedRangeNotSatisfiable {
+			if contentRange := response.Header.Get("Content-Range"); contentRange != "" {
+				w.Header().Set("Content-Range", contentRange)
+			}
+			w.WriteHeader(response.StatusCode)
+			return nil
+		}
 		if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 			return fmt.Errorf("download server returned %s", response.Status)
 		}
-		if contentType := response.Header.Get("Content-Type"); contentType != "" {
-			w.Header().Set("Content-Type", contentType)
+		for _, headerName := range []string{"Content-Type", "Content-Length", "Content-Range", "Accept-Ranges", "ETag", "Last-Modified"} {
+			if value := response.Header.Get(headerName); value != "" {
+				w.Header().Set(headerName, value)
+			}
 		}
-		if response.ContentLength >= 0 {
-			w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-		}
+		w.WriteHeader(response.StatusCode)
 		_, copyErr := io.Copy(w, response.Body)
 		return copyErr
 	})
