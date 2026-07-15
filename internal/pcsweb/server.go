@@ -12,7 +12,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -132,8 +131,8 @@ func fsSub(files embed.FS, dir string) (fs.FS, error) {
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	ensureSession(w, r)
 	user := pcsconfig.Config.ActiveUser()
-	loggedIn := user.Name != "" && (user.BDUSS != "" || user.AccessToken != "" || user.COOKIES != "")
-	writeJSON(w, http.StatusOK, statusResponse{LoggedIn: loggedIn, UserName: user.Name})
+	loggedIn := user.BDUSS != "" || user.AccessToken != "" || user.COOKIES != ""
+	writeJSON(w, http.StatusOK, statusResponse{LoggedIn: loggedIn, UserName: displayUserName(user)})
 }
 
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -153,12 +152,13 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, errors.New("cookies are required"))
 		return
 	}
-	if !hasCookie(request.Cookies, "BDUSS") {
+	bduss := cookieValue(request.Cookies, "BDUSS")
+	if bduss == "" {
 		writeError(w, http.StatusBadRequest, errors.New("cookies must contain BDUSS"))
 		return
 	}
 
-	user, err := pcsconfig.Config.SetupUserByBDUSS("", "", "", request.Cookies)
+	user, err := pcsconfig.Config.SetupUserByBDUSS(bduss, "", "", request.Cookies)
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, err)
 		return
@@ -167,12 +167,34 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, fmt.Errorf("login succeeded but saving config failed: %w", err))
 		return
 	}
-	writeJSON(w, http.StatusOK, statusResponse{LoggedIn: true, UserName: user.Name})
+	writeJSON(w, http.StatusOK, statusResponse{LoggedIn: true, UserName: displayUserName(user)})
 }
 
 func hasCookie(cookieHeader, name string) bool {
-	pattern := regexp.MustCompile(`(?:^|;\s*)` + regexp.QuoteMeta(name) + `=[^;]+`)
-	return pattern.MatchString(cookieHeader)
+	return cookieValue(cookieHeader, name) != ""
+}
+
+func cookieValue(cookieHeader, name string) string {
+	for _, part := range strings.Split(cookieHeader, ";") {
+		key, value, ok := strings.Cut(strings.TrimSpace(part), "=")
+		if ok && strings.TrimSpace(key) == name {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
+}
+
+func displayUserName(user *pcsconfig.Baidu) string {
+	if user == nil {
+		return ""
+	}
+	if user.Name != "" {
+		return user.Name
+	}
+	if user.UID != 0 {
+		return fmt.Sprintf("UID %d", user.UID)
+	}
+	return ""
 }
 
 func (s *Server) handleFiles(w http.ResponseWriter, r *http.Request) {
@@ -786,7 +808,7 @@ func cookieHeader(jar http.CookieJar, requestURL *url.URL) string {
 
 func activePCS() (*baidupcs.BaiduPCS, error) {
 	user := pcsconfig.Config.ActiveUser()
-	if user.Name == "" || (user.BDUSS == "" && user.AccessToken == "" && user.COOKIES == "") {
+	if user.BDUSS == "" && user.AccessToken == "" && user.COOKIES == "" {
 		return nil, errors.New("no active Baidu account; run BaiduPCS-Go login first")
 	}
 	return pcsconfig.Config.ActiveUserBaiduPCS(), nil
