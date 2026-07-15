@@ -63,6 +63,9 @@ body {
 #cookie-input:focus { border-color: var(--green); box-shadow: 0 0 0 4px rgba(13, 116, 99, .1); }
 .access-password-input { display: block; width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; outline: none; background: rgba(255, 255, 251, .86); color: var(--ink); font: 13px var(--mono); }
 .access-password-input:focus { border-color: var(--green); box-shadow: 0 0 0 4px rgba(13, 116, 99, .1); }
+.access-login-row { display: flex; align-items: stretch; gap: 10px; }
+.access-login-row .access-password-input { flex: 1 1 auto; min-width: 0; }
+.access-login-row .login-button { flex: 0 0 142px; width: auto; min-height: 46px; }
 .login-hint { color: var(--muted); font: 10px/1.6 var(--mono); margin: 10px 0 17px; }
 .login-button { min-height: 42px; padding: 0 18px; }
 .login-button:disabled { cursor: wait; opacity: .65; }
@@ -181,6 +184,8 @@ footer span:last-child { text-align: right; }
   .connection { justify-self: start; }
   #app-screen { margin-top: 24px; }
   .login-modal-card { padding: 25px 20px; }
+  .access-login-row { flex-direction: column; }
+  .access-login-row .login-button { flex-basis: auto; width: 100%; }
   .upload-heading { align-items: stretch; flex-direction: column; padding: 22px 18px; }
   .download-panel { align-items: stretch; flex-direction: column; padding: 0 18px 18px; }
   .upload-task-list { padding: 0 18px 18px; }

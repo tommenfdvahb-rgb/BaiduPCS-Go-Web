@@ -51,8 +51,10 @@
         <p class="modal-copy">请输入启动 Web 页面时设置的访问密码。</p>
         <form id="access-form">
           <label class="cookie-label" for="access-password">访问密码</label>
-          <input id="access-password" class="access-password-input" type="password" autocomplete="current-password" autofocus>
-          <button class="primary-button login-button" type="submit">进入 Web 页面</button>
+          <div class="access-login-row">
+            <input id="access-password" class="access-password-input" type="password" autocomplete="current-password" autofocus>
+            <button class="primary-button login-button" type="submit">进入 Web 页面</button>
+          </div>
           <div id="access-notice" class="login-notice" hidden></div>
         </form>
       </div>
