@@ -84,6 +84,7 @@ h1 em { color: var(--green); font-style: normal; }
 .crumb { border: 0; background: transparent; color: var(--muted); padding: 7px 5px; cursor: pointer; }
 .crumb.current { color: var(--ink); font-weight: 500; }
 .toolbar-actions { display: flex; gap: 9px; }
+.heading-actions { display: flex; align-items: center; gap: 10px; }
 button { font-family: var(--sans); cursor: pointer; }
 .quiet-button, .primary-button { border-radius: 9px; padding: 10px 14px; font-size: 12px; font-weight: 700; }
 .quiet-button { border: 1px solid var(--line); color: var(--muted); background: transparent; }
@@ -130,6 +131,11 @@ button { font-family: var(--sans); cursor: pointer; }
 .download-actions { display: flex; gap: 8px; }
 .download-icon { background: #e5edf7; color: #3c6b9f; }
 .share-creator { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(360px, 1fr); gap: 18px; padding: 0 25px 22px; border-bottom: 1px solid var(--line); background: #f8faf2; }
+.share-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 18px 25px; border-bottom: 1px solid var(--line); background: #f8faf2; }
+.share-toolbar strong, .share-toolbar span { display: block; }
+.share-toolbar strong { color: var(--ink); font-size: 13px; }
+.share-toolbar span { color: var(--muted); font: 10px var(--mono); margin-top: 4px; }
+.share-toolbar-actions { display: flex; gap: 8px; }
 .share-path-wrap, .share-option { display: flex; flex-direction: column; gap: 5px; color: var(--muted); font: 9px var(--mono); }
 .share-path-wrap textarea { width: 100%; resize: vertical; border: 1px solid var(--line); border-radius: 10px; padding: 11px; outline: none; background: white; color: var(--ink); font: 12px/1.6 var(--mono); }
 .share-path-wrap textarea:focus, .share-option input:focus { border-color: var(--green); box-shadow: 0 0 0 4px rgba(13, 116, 99, .1); }
@@ -138,6 +144,14 @@ button { font-family: var(--sans); cursor: pointer; }
 .share-option input { width: 100%; min-height: 38px; border: 1px solid var(--line); border-radius: 8px; padding: 0 10px; outline: none; background: white; color: var(--ink); font: 12px var(--mono); }
 .share-option small { color: var(--muted); font: 9px var(--mono); }
 .share-create-button { min-height: 38px; white-space: nowrap; }
+.share-modal-card { position: relative; width: min(100%, 640px); overflow: hidden; border: 1px solid rgba(255, 255, 255, .9); border-radius: 22px; padding: 30px; background: var(--paper); box-shadow: 0 28px 90px rgba(27, 41, 40, .28); animation: modal-in .2s ease-out; }
+.share-modal-card h2 { margin: 0; font-size: 30px; letter-spacing: -.06em; }
+.share-modal-card > * { position: relative; z-index: 1; }
+.share-modal-card .share-path-wrap { margin-top: 22px; }
+.share-modal-card .share-options { margin-top: 14px; }
+.share-modal-card .share-create-button { width: 100%; margin-top: 16px; }
+.share-modal-card .share-result { margin: 16px 0 0; }
+.share-modal-card .modal-close { position: absolute; z-index: 2; }
 .share-notice { padding: 11px 25px; }
 .share-result { display: grid; grid-template-columns: minmax(0, 1fr) 100px auto; gap: 16px; align-items: center; margin: 0 25px; border-bottom: 1px solid var(--line); padding: 16px 0; }
 .share-result > div { min-width: 0; }
@@ -153,6 +167,11 @@ button { font-family: var(--sans); cursor: pointer; }
 .share-link a { color: var(--green); font: 11px var(--mono); }
 .share-copy { white-space: nowrap; }
 .share-list-heading { margin-top: 8px; }
+.table-select { display: flex; align-items: center; gap: 6px; }
+.table-select input, .overview-select, .upload-history-select { accent-color: var(--green); }
+.overview-select { flex: 0 0 auto; width: 15px; height: 15px; margin: 0 1px 0 0; }
+.history-main { display: flex; align-items: center; gap: 10px; }
+.history-main > div { min-width: 0; }
 .upload-heading { display: flex; justify-content: space-between; align-items: end; gap: 22px; padding: 27px 25px 24px; }
 .upload-heading h2 { margin: 0; font-size: 28px; letter-spacing: -.06em; }
 .upload-heading p:not(.eyebrow) { color: var(--muted); font-size: 12px; margin: 9px 0 0; }
@@ -211,12 +230,16 @@ footer span:last-child { text-align: right; }
   .access-login-row { flex-direction: column; }
   .access-login-row .login-button { flex-basis: auto; width: 100%; }
   .upload-heading { align-items: stretch; flex-direction: column; padding: 22px 18px; }
+  .share-toolbar { align-items: stretch; flex-direction: column; padding: 18px; }
+  .share-toolbar-actions { justify-content: space-between; }
   .download-panel { align-items: stretch; flex-direction: column; padding: 0 18px 18px; }
   .share-creator { display: flex; flex-direction: column; padding: 0 18px 18px; }
   .share-options { align-items: stretch; flex-wrap: wrap; }
   .share-create-button { flex: 1 1 100%; }
   .share-notice { padding-right: 18px; padding-left: 18px; }
   .share-result { grid-template-columns: 1fr auto; margin: 0 18px; }
+  .share-modal-card { padding: 25px 20px; }
+  .share-modal-card .share-result { margin-right: 0; margin-left: 0; }
   .share-result > div:first-child { grid-column: 1 / -1; }
   .share-list { padding: 0 18px 18px; }
   .share-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }

@@ -1,7 +1,9 @@
-const state = { path: "/", page: 1, pageSize: 12, totalPages: 1, activeTab: "overview", uploadTargetPath: "/", uploadTargetSelected: false, uploadPickerPath: "/", uploadHistoryPage: 1, downloadHistoryPage: 1, sharePage: 1, latestShareLink: "", latestSharePassword: "", historyPageSize: 10 };
+const state = { path: "/", page: 1, pageSize: 12, totalPages: 1, activeTab: "overview", selectedOverviewPaths: new Set(), uploadTargetPath: "/", uploadTargetSelected: false, uploadPickerPath: "/", uploadHistoryPage: 1, downloadHistoryPage: 1, sharePage: 1, latestShareLink: "", latestSharePassword: "", historyPageSize: 10 };
 const list = document.querySelector("#file-list");
 const notice = document.querySelector("#notice");
 const breadcrumbs = document.querySelector("#breadcrumbs");
+const overviewShareButton = document.querySelector("#overview-share");
+const overviewSelectAll = document.querySelector("#overview-select-all");
 const uploadInput = document.querySelector("#upload-files");
 const uploadButton = document.querySelector("#upload-button");
 const uploadDirectory = document.querySelector("#upload-directory");
@@ -37,6 +39,7 @@ const uploadHistoryPagination = document.querySelector("#upload-history-paginati
 const uploadHistoryPrev = document.querySelector("#upload-history-prev");
 const uploadHistoryNext = document.querySelector("#upload-history-next");
 const uploadHistoryPageInfo = document.querySelector("#upload-history-page-info");
+const uploadHistoryShareButton = document.querySelector("#upload-history-share");
 const downloadTab = document.querySelector("#download-tab");
 const downloadPane = document.querySelector("#download-pane");
 const shareTab = document.querySelector("#share-tab");
@@ -70,6 +73,8 @@ const sharePagination = document.querySelector("#share-pagination");
 const sharePrev = document.querySelector("#share-prev");
 const shareNext = document.querySelector("#share-next");
 const sharePageInfo = document.querySelector("#share-page-info");
+const shareOpenCreate = document.querySelector("#share-open-create");
+const shareModal = document.querySelector("#share-modal");
 
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
@@ -158,14 +163,24 @@ function showUploadNotice(message) {
   uploadNotice.hidden = !message;
 }
 
+function updateOverviewSelectAll() {
+  const boxes = list.querySelectorAll(".overview-select");
+  const checked = list.querySelectorAll(".overview-select:checked");
+  overviewSelectAll.checked = boxes.length > 0 && boxes.length === checked.length;
+  overviewSelectAll.indeterminate = checked.length > 0 && checked.length < boxes.length;
+}
+
 function renderFiles(items) {
   if (!items.length) {
     list.innerHTML = '<div class="empty">这里还没有文件，或者这是一个空目录。</div>';
+    overviewSelectAll.checked = false;
+    overviewSelectAll.indeterminate = false;
     return;
   }
   list.innerHTML = items.map((item, index) => `
     <div class="file-row" style="animation-delay:${Math.min(index * 25, 300)}ms">
       <div class="file-name">
+        <input class="overview-select" type="checkbox" data-path="${escapeHTML(item.path)}" ${state.selectedOverviewPaths.has(item.path) ? "checked" : ""}>
         <span class="file-icon ${item.is_dir ? "" : "file"}">${item.is_dir ? "⌂" : "·"}</span>
         <button data-open="${escapeHTML(item.path)}" data-dir="${item.is_dir}">${escapeHTML(item.name)}</button>
       </div>
@@ -177,6 +192,11 @@ function renderFiles(items) {
       </div>
     </div>`).join("");
 
+  list.querySelectorAll(".overview-select").forEach(checkbox => checkbox.addEventListener("change", () => {
+    if (checkbox.checked) state.selectedOverviewPaths.add(checkbox.dataset.path);
+    else state.selectedOverviewPaths.delete(checkbox.dataset.path);
+    updateOverviewSelectAll();
+  }));
   list.querySelectorAll("[data-open]").forEach(button => button.addEventListener("click", () => {
     if (button.dataset.dir === "true") loadFiles(button.dataset.open);
   }));
@@ -245,10 +265,12 @@ function renderUploadHistory(history, total, page, totalPages) {
   }
   uploadHistoryList.innerHTML = history.map(item => {
     const files = (item.files || []).join("、");
+    const targetPath = String(item.target_path || "/").replace(/\/$/, "");
+    const sharePaths = (item.files || []).map(file => `${targetPath || "/"}/${file}`.replace(/\/+/g, "/"));
     const started = item.started_at ? formatDateTime(item.started_at) : "—";
     const stateClass = item.status === "已完成" ? "history-success" : item.status === "失败" ? "history-failed" : "";
     return `<div class="history-row">
-      <div class="history-main"><strong>${escapeHTML(files || "上传任务")}</strong><small>目标：${escapeHTML(item.target_path)}</small></div>
+      <div class="history-main"><input class="upload-history-select" type="checkbox" data-share-paths="${escapeHTML(JSON.stringify(sharePaths))}"><div><strong>${escapeHTML(files || "上传任务")}</strong><small>目标：${escapeHTML(item.target_path)}</small></div></div>
       <span class="history-status ${stateClass}">${escapeHTML(item.status)}</span>
       <span class="history-time">${started}</span>
     </div>`;
@@ -345,6 +367,35 @@ async function loadDownloadHistory(page = state.downloadHistoryPage) {
 function showShareNotice(message) {
   shareNotice.textContent = message;
   shareNotice.hidden = !message;
+}
+
+function openShareModal(paths = []) {
+  sharePaths.value = paths.join("\n");
+  sharePassword.value = "";
+  sharePeriod.value = "0";
+  shareResult.hidden = true;
+  showShareNotice("");
+  shareModal.hidden = false;
+  shareModal.removeAttribute("hidden");
+  sharePaths.focus();
+}
+
+function closeShareModal() {
+  shareModal.hidden = true;
+  shareModal.setAttribute("hidden", "");
+  showShareNotice("");
+}
+
+function selectedUploadHistoryPaths() {
+  const paths = new Set();
+  uploadHistoryList.querySelectorAll(".upload-history-select:checked").forEach(checkbox => {
+    try {
+      JSON.parse(checkbox.dataset.sharePaths || "[]").forEach(path => paths.add(path));
+    } catch (_) {
+      // Ignore malformed data from an unavailable history row.
+    }
+  });
+  return Array.from(paths);
 }
 
 function combinedShareLink(link, password) {
@@ -568,11 +619,21 @@ async function renameItem(oldPath, oldName) {
 
 document.querySelector("#refresh-button").addEventListener("click", () => loadFiles(state.path));
 document.querySelector("#mkdir-button").addEventListener("click", createFolder);
+overviewSelectAll.addEventListener("change", () => {
+  list.querySelectorAll(".overview-select").forEach(checkbox => {
+    checkbox.checked = overviewSelectAll.checked;
+    if (checkbox.checked) state.selectedOverviewPaths.add(checkbox.dataset.path);
+    else state.selectedOverviewPaths.delete(checkbox.dataset.path);
+  });
+  updateOverviewSelectAll();
+});
+overviewShareButton.addEventListener("click", () => openShareModal(Array.from(state.selectedOverviewPaths)));
 overviewTab.addEventListener("click", () => switchTab("overview"));
 uploadTab.addEventListener("click", () => switchTab("upload"));
 downloadTab.addEventListener("click", () => switchTab("download"));
 shareTab.addEventListener("click", () => switchTab("share"));
 document.querySelector("#upload-refresh").addEventListener("click", () => { loadUploadTasks(); loadUploadHistory(); });
+uploadHistoryShareButton.addEventListener("click", () => openShareModal(selectedUploadHistoryPaths()));
 document.querySelector("#download-refresh").addEventListener("click", () => { loadDownloadTasks(); loadDownloadHistory(); });
 document.querySelector("#download-start").addEventListener("click", () => startDownload(downloadPath.value));
 document.querySelector("#browser-download").addEventListener("click", () => startBrowserDownload(downloadPath.value));
@@ -582,6 +643,9 @@ document.querySelector("#server-browser-download").addEventListener("click", () 
   window.location.href = `/api/server-download?path=${encodeURIComponent(localPath)}`;
 });
 document.querySelector("#share-refresh").addEventListener("click", () => loadShares(state.sharePage));
+shareOpenCreate.addEventListener("click", () => openShareModal());
+document.querySelector("#share-close").addEventListener("click", closeShareModal);
+document.querySelector("#share-close-backdrop").addEventListener("click", closeShareModal);
 sharePrev.addEventListener("click", () => loadShares(state.sharePage - 1));
 shareNext.addEventListener("click", () => loadShares(state.sharePage + 1));
 shareCreate.addEventListener("click", async () => {
@@ -793,6 +857,7 @@ document.querySelector("#upload-directory-choose").addEventListener("click", () 
 });
 document.addEventListener("keydown", event => {
   if (event.key === "Escape" && !uploadDirectoryModal.hidden) closeUploadDirectoryPicker();
+  if (event.key === "Escape" && !shareModal.hidden) closeShareModal();
 });
 setInterval(() => {
   // Tasks need live progress; histories refresh on explicit page actions.

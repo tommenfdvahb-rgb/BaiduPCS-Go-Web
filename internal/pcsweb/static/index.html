@@ -68,10 +68,11 @@
             <div class="crumbs" id="breadcrumbs"></div>
             <div class="toolbar-actions">
               <button class="quiet-button" id="refresh-button">刷新</button>
+              <button class="quiet-button" id="overview-share">分享选中</button>
               <button class="primary-button" id="mkdir-button"><span>＋</span>新建文件夹</button>
             </div>
           </div>
-          <div class="table-head"><span>文件名</span><span>修改时间</span><span>大小</span><span></span></div>
+          <div class="table-head"><span class="table-select"><input id="overview-select-all" type="checkbox">文件名</span><span>修改时间</span><span>大小</span><span></span></div>
           <div id="file-list" class="file-list"></div>
           <div class="pagination" id="pagination" hidden>
             <button class="page-button" id="page-prev">上一页</button>
@@ -121,7 +122,7 @@
           <div id="upload-notice" class="notice upload-notice" hidden></div>
           <div class="task-heading"><span>正在上传</span><small id="task-summary">暂无任务</small></div>
           <div id="upload-task-list" class="upload-task-list"></div>
-          <div class="task-heading history-heading"><span>上传历史</span><small id="upload-history-summary">暂无记录</small></div>
+          <div class="task-heading history-heading"><span>上传历史</span><span class="heading-actions"><small id="upload-history-summary">暂无记录</small><button type="button" class="quiet-button" id="upload-history-share">分享选中</button></span></div>
           <div id="upload-history-list" class="download-history-list"></div>
           <div class="history-pagination" id="upload-history-pagination" hidden>
             <button class="page-button" id="upload-history-prev">上一页</button>
@@ -176,37 +177,13 @@
               <h2>文件分享</h2>
               <p>创建网盘分享链接，设置有效期和提取码。</p>
             </div>
-            <button type="button" class="quiet-button" id="share-refresh">刷新分享</button>
           </div>
-          <div class="share-creator">
-            <label class="share-path-wrap">
-              <span>网盘文件或目录路径</span>
-              <textarea id="share-paths" rows="3" placeholder="例如：/文档/资料.zip&#10;每行一个路径"></textarea>
-            </label>
-            <div class="share-options">
-              <label class="share-option">
-                <span>提取码</span>
-                <input id="share-password" type="text" maxlength="4" inputmode="text" placeholder="自动生成">
-              </label>
-              <label class="share-option period-option">
-                <span>有效期（天）</span>
-                <input id="share-period" type="number" min="0" value="0">
-                <small>0 为永久</small>
-              </label>
-              <button type="button" class="primary-button share-create-button" id="share-create">创建分享</button>
+          <div class="share-toolbar">
+            <div><strong>创建新的分享链接</strong><span>支持多个文件或目录一起分享。</span></div>
+            <div class="share-toolbar-actions">
+              <button type="button" class="quiet-button" id="share-refresh">刷新分享</button>
+              <button type="button" class="primary-button" id="share-open-create">新建分享</button>
             </div>
-          </div>
-          <div id="share-notice" class="notice share-notice" hidden></div>
-          <div id="share-result" class="share-result" hidden>
-            <div>
-              <span class="share-result-label">分享链接</span>
-              <a id="share-result-link" target="_blank" rel="noreferrer"></a>
-            </div>
-            <div>
-              <span class="share-result-label">提取码</span>
-              <strong id="share-result-password"></strong>
-            </div>
-            <button type="button" class="quiet-button" id="share-copy-result">复制链接</button>
           </div>
           <div class="task-heading share-list-heading"><span>已有分享</span><small id="share-summary">暂无记录</small></div>
           <div id="share-list" class="share-list"></div>
@@ -231,6 +208,44 @@
         </div>
         <div id="upload-directory-list" class="directory-list"></div>
         <button type="button" class="primary-button directory-choose" id="upload-directory-choose">选择当前目录</button>
+      </div>
+    </div>
+
+    <div id="share-modal" class="modal" hidden>
+      <div class="modal-backdrop" id="share-close-backdrop"></div>
+      <div class="share-modal-card" role="dialog" aria-modal="true" aria-labelledby="share-modal-title">
+        <button type="button" class="modal-close" id="share-close" aria-label="关闭">×</button>
+        <p class="eyebrow">NEW SHARE</p>
+        <h2 id="share-modal-title">创建分享</h2>
+        <p class="modal-copy">选择的文件已填入下面，也可以继续添加或修改路径。</p>
+        <label class="share-path-wrap">
+          <span>网盘文件或目录路径</span>
+          <textarea id="share-paths" rows="4" placeholder="例如：/文档/资料.zip&#10;每行一个路径"></textarea>
+        </label>
+        <div class="share-options">
+          <label class="share-option">
+            <span>提取码</span>
+            <input id="share-password" type="text" maxlength="4" inputmode="text" placeholder="自动生成">
+          </label>
+          <label class="share-option period-option">
+            <span>有效期（天）</span>
+            <input id="share-period" type="number" min="0" value="0">
+            <small>0 为永久</small>
+          </label>
+        </div>
+        <button type="button" class="primary-button share-create-button" id="share-create">创建分享</button>
+        <div id="share-notice" class="notice share-notice" hidden></div>
+        <div id="share-result" class="share-result" hidden>
+          <div>
+            <span class="share-result-label">分享链接</span>
+            <a id="share-result-link" target="_blank" rel="noreferrer"></a>
+          </div>
+          <div>
+            <span class="share-result-label">提取码</span>
+            <strong id="share-result-password"></strong>
+          </div>
+          <button type="button" class="quiet-button" id="share-copy-result">复制链接</button>
+        </div>
       </div>
     </div>
 
